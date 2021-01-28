@@ -21,8 +21,8 @@ raw.drop_channels('C3_1')
 raw2,anot = set_sw_kc_annot(raw,'D:/Disco de 500/Work/Doctorado/Repository/Python-san/Python-san/Load Data/Data/ExpS68-S02_2020July23_23-25.txt')
 
 
-t_idx = anot.onset
-t_dur = anot.duration
+t_idx2 = anot.onset
+t_dur2 = anot.duration
 
 sig_raw = raw.get_data()
 sig_raw_cp = raw.copy()
@@ -32,6 +32,13 @@ sig_filt = sig_raw_cp.get_data()
 
 X = sig_raw[0]
 Y = sig_filt[0]
+
+#%%
+condition = np.logical_and(t_dur2>0.5,t_dur2<0.9)
+a = np.where(condition,t_dur2,0)
+b = t_dur2[condition]
+
+
 
 #%%
 swaves = []
