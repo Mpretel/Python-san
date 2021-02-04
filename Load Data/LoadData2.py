@@ -8,6 +8,7 @@ from Annot import set_sw_kc_annot
 from scipy import signal
 from scipy.interpolate import make_interp_spline, BSpline
 from skimage.restoration import denoise_wavelet
+import time
 
 #%%
 
@@ -21,48 +22,145 @@ raw.drop_channels('C3_1')
 raw2,anot = set_sw_kc_annot(raw,'D:/Disco de 500/Work/Doctorado/Repository/Python-san/Python-san/Load Data/Data/ExpS68-S02_2020July23_23-25.txt')
 
 
-t_idx2 = anot.onset
-t_dur2 = anot.duration
-
+t_idx = anot.onset
+t_dur = anot.duration
 sig_raw = raw.get_data()
-sig_raw_cp = raw.copy()
-sig_raw_cp.filter(0.2,4,method='iir')
-sig_filt = sig_raw_cp.get_data()
-
 
 X = sig_raw[0]
-Y = sig_filt[0]
 
 #%%
-condition = np.logical_and(t_dur2>0.5,t_dur2<0.9)
-a = np.where(condition,t_dur2,0)
-b = t_dur2[condition]
+condition = np.logical_and(t_dur>0.5,t_dur<0.9)
+tmp_dur = t_dur[condition]
+tmp_idx = t_idx[condition]
+# np.where(condition,t_dur,0)
+# b = t_dur[condition]
+
+# Se pueden usar 77 para entrenar, 26 para validación y 26 para test
 
 
 
 #%%
-t_idx = []
-t_dur = []
 swaves = []
 k = 0
-for i in t_idx:
-    swaves.append(X[int(np.round((i-t_dur[k])*200)):int(np.round((i+2*t_dur[k])*200))])
-    k = k + 1
-
-
-swaves_filt = []
-k = 0
-for i in t_idx:
-    swaves_filt.append(Y[int(np.round((i-t_dur[k])*200)):int(np.round((i+2*t_dur[k])*200))])
+for i in tmp_idx:
+    swaves.append(X[int(np.round((i-tmp_dur[k])*200)):int(np.round((i+2*tmp_dur[k])*200))])
     k = k + 1
 
 no_swaves = []
 for i in range(0,20):
     no_swaves.append(X[ 200*i + 200*400 : 200*(i+2) + 200*400])
 
-no_swaves_filt = []
-for i in range(0,20):
-    no_swaves_filt.append(Y[ 200*i + 200*400 : 200*(i+2) + 200*400])
+
+#%%
+for i in range(len(no_swaves)):
+    plt.figure(figsize=[10,3])
+    plt.plot(no_swaves[i])
+    plt.show()
+    
+    plt.figure(figsize=[10,3])
+    plt.plot(swaves[i])
+    plt.show()
+    
+    time.sleep(2)
+#%%
+for i in range(len(no_swaves)):
+    plt.figure(figsize=[10,3])
+    plt.specgram(no_swaves[i])
+    plt.show()
+    
+    plt.figure(figsize=[10,3])
+    plt.specgram(swaves[i])
+    plt.show()
+    
+    time.sleep(2)
+
+#%%
+wavelist_cont = pywt.wavelist(kind='continuous')
+wavelist_disc = pywt.wavelist(kind='discrete')
+for i in range(len(no_swaves)):
+    scales = np.arange(1,121,0.1)
+    coef, freqs = pywt.cwt(no_swaves[i],scales,'morl')
+    plt.figure(figsize=(12,4))
+    plt.imshow(abs(coef),extent=[0,len(no_swaves)-1,30,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+    plt.gca().invert_yaxis()
+    plt.yticks(np.arange(1,31,1))
+    plt.xticks(np.arange(0,len(no_swaves)-1,10))
+    plt.show()    
+    
+    
+    scales = np.arange(1,121,0.1)
+    coef, freqs = pywt.cwt(swaves[i],scales,'morl')
+    plt.figure(figsize=(12,4))
+    plt.imshow(abs(coef),extent=[0,len(swaves)-1,30,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+    plt.gca().invert_yaxis()
+    plt.yticks(np.arange(1,31,1))
+    plt.xticks(np.arange(0,len(swaves)-1,10))
+    plt.show() 
+    
+    time.sleep(2)
+
+#%%
+
+#Estoy probando este cell
+
+i = 2
+plt.figure(figsize=[10,3])
+plt.plot(no_swaves[i])
+plt.show()
+
+scales = np.arange(1,121)
+coef, freqs = pywt.cwt(no_swaves[i],scales,'morl')
+plt.figure(figsize=(12,4))
+#interpolation='bilinear'
+plt.imshow(abs(coef),extent=[0,len(no_swaves[i])-1,30,1], cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+plt.gca().invert_yaxis()
+plt.yticks(np.arange(1,31,1))
+plt.xticks(np.arange(0,len(no_swaves[i])-1,10))
+plt.show()
+
+tmp = coef[::35]
+plt.imshow(abs(tmp),extent=[0,len(no_swaves[i])-1,30,1],cmap='jet', aspect='auto',vmax=abs(tmp).max(),vmin=-abs(tmp).max())
+plt.show()
+
+plt.figure(figsize=[10,3])
+plt.plot(swaves[i])
+plt.show()
+
+#scales = np.arange(1,121,1)
+coef, freqs = pywt.cwt(swaves[i],scales,'morl',sampling_period=1/200)
+plt.figure(figsize=(12,4))
+# plt.imshow(abs(coef),extent=[0,len(swaves[i])-1,30,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+plt.imshow(abs(coef),extent=[0,len(swaves[i])-1,30,1],cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+plt.gca().invert_yaxis()
+plt.yticks(np.arange(1,31,1))
+plt.xticks(np.arange(0,len(swaves[i])-1,10))
+plt.show()
+
+tmp = coef[::35]
+plt.imshow(abs(tmp),extent=[0,len(no_swaves[i])-1,30,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(tmp).max(),vmin=-abs(tmp).max())
+plt.show()
+
+
+#%%
+scales = np.arange(1,200,1)
+#scales = np.arange(1,21,1)
+
+coef, freqs = pywt.cwt(swaves[0],scales,'morl',sampling_period=1/200)
+plt.figure(figsize=(12,4))
+plt.imshow(abs(coef),extent=[0,len(swaves[0])-1,20,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+plt.gca().invert_yaxis()
+plt.yticks(np.arange(1,21,1))
+plt.xticks(np.arange(0,len(swaves[0])-1,10))
+plt.show()
+
+coef, freqs = pywt.cwt(no_swaves[0],scales,'morl',sampling_period=1/200)
+plt.figure(figsize=(12,4))
+plt.imshow(abs(coef),extent=[0,len(no_swaves[0])-1,20,1],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coef).max(),vmin=-abs(coef).max())
+plt.gca().invert_yaxis()
+plt.yticks(np.arange(1,21,1))
+plt.xticks(np.arange(0,len(no_swaves[0])-1,10))
+plt.show() 
+
 
 #%%
 sw_idx = 0
