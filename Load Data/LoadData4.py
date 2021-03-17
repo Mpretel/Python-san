@@ -42,7 +42,6 @@ tmp_idx = t_idx[condition]
 
 #%%
 swaves = []
-swaves1 = []
 k = 0
 for i in tmp_idx:
     # swaves.append(X[int(np.round((i-tmp_dur[k])*200)):int(np.round((i+2*tmp_dur[k])*200))])
@@ -55,15 +54,48 @@ for i in tmp_idx:
 
 
 no_swaves = []
-no_swaves1 = []
+# for i in range(0,130):
+#     # no_swaves.append(X[ 200*i + 200*400 : 200*(i+2) + 200*400])
+#     no_swaves.append(X[ 200*i + 200*400 : 200*(i+1) + 200*400])
+
+offset = 126
+tmp_fs = 200
+for i in range(0,66):
+    no_swaves.append(X[ tmp_fs*(i + offset) : tmp_fs*((i+1) + offset)])
+offset = 335
+for i in range(0,12):
+    no_swaves.append(X[ tmp_fs*(i + offset) : tmp_fs*((i+1) + offset)])
+offset = 15940
 for i in range(0,20):
-    # no_swaves.append(X[ 200*i + 200*400 : 200*(i+2) + 200*400])
-    no_swaves.append(X[ 200*i + 200*400 : 200*(i+1) + 200*400])
+    no_swaves.append(X[ tmp_fs*(i + offset) : tmp_fs*((i+1) + offset)])
+offset = 3195
+for i in range(0,22):
+    no_swaves.append(X[ tmp_fs*(i + offset) : tmp_fs*((i+1) + offset)])
+offset = 370
+for i in range(0,9):
+    no_swaves.append(X[ tmp_fs*(i + offset) : tmp_fs*((i+1) + offset)])
+
+print(len(no_swaves))
+#%%
+# Xlin = np.linspace(0, 200,200)
+# Ylin = np.ones(200)*75e-6
+# Ylin2 = np.ones(200)*(-75e-6)
+# plt.plot(Xlin,Ylin,linestyle='solid',color='red',linewidth=2)
+# plt.show()
+#%%
+# for i in range(0,129):
+#     print(i)
+#     plt.plot(no_swaves[i])
+#     plt.plot(Xlin,Ylin,linestyle='solid',color='red',linewidth=2)
+#     plt.plot(Xlin,Ylin2,linestyle='solid',color='red',linewidth=2)
+#     plt.show()
+
 #%%
 
 def plot_scalogram(coefs,sig2plot):
     plt.figure(figsize=(12,4))
-    plt.imshow(abs(coefs),extent=[0,len(sig2plot)-1,120,0],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coefs).max(),vmin=-abs(coefs).max())
+    #plt.imshow(abs(coefs),extent=[0,len(sig2plot)-1,120,0],interpolation='bilinear', cmap='jet', aspect='auto',vmax=abs(coefs).max(),vmin=-abs(coefs).max())
+    plt.imshow(abs(coefs),extent=[0,len(sig2plot)-1,120,0],interpolation='bilinear', cmap='jet', aspect='auto',vmax=255,vmin=0)
     plt.gca().invert_yaxis()
     plt.yticks(np.arange(0,121,10))
     plt.xticks(np.arange(0,len(sig2plot)-1,100))
@@ -75,7 +107,8 @@ wavelist_disc = pywt.wavelist(kind='discrete')
 
 x_train = []
 
-for i in range(len(no_swaves)):
+# for i in range(len(no_swaves)):
+for i in range(2):
     # print("NOISE 2 SEG")
     # scales = np.arange(1,121,0.1)
     # coef, freqs = pywt.cwt(no_swaves[i],scales,'morl')
@@ -87,10 +120,10 @@ for i in range(len(no_swaves)):
     # plt.yticks(np.arange(0,121,10))
     # plt.xticks(np.arange(0,len(no_swaves[i])-1,100))
     # plt.show()   
-
-    print("NOISE 1 SEG")
+    print(i)
+    print("NOISE")
     scales = np.arange(1,121,0.1)
-    coef, freqs = pywt.cwt(no_swaves[i],scales,'morl')
+    coef, freqs = pywt.cwt(no_swaves[i],scales,'morl',sampling_period=1/200)
     coef = ((coef - coef.min()) * (1/(coef.max() - coef.min()) * 255)).astype('uint8')
     plot_scalogram(coef,no_swaves[i])
     # plt.figure(figsize=(12,4))
@@ -114,7 +147,7 @@ for i in range(len(no_swaves)):
 
     print("SLOW WAVE")
     scales = np.arange(1,121,0.1)
-    coef, freqs = pywt.cwt(swaves[i],scales,'morl')
+    coef, freqs = pywt.cwt(swaves[i],scales,'morl',sampling_period=1/200)
     coef = ((coef - coef.min()) * (1/(coef.max() - coef.min()) * 255)).astype('uint8')
     plot_scalogram(coef,no_swaves[i])
     # plt.figure(figsize=(12,4))
