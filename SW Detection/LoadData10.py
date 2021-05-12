@@ -19,7 +19,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
 #%%
 ########## DATASET ##########
-raw = mne.io.read_raw_brainvision('D:/Disco de 500/Work/Doctorado/Repository/Python-san/Python-san/Load Data/Data/ExpS68-S02.vhdr', preload=True)
+# raw = mne.io.read_raw_brainvision('D:/Disco de 500/Work/Doctorado/Repository/Python-san/Python-san/Load Data/Data/ExpS68-S02.vhdr', preload=True)
+raw = mne.io.read_raw_brainvision('Data\ExpS68-S02.vhdr', preload=True)
 Data, sfreq, chan, fs = raw._data,raw.info['sfreq'], raw.info['ch_names'], raw.info['sfreq']
 raw.drop_channels(chan[2:len(chan)])
 raw.drop_channels('C3_1')
@@ -29,7 +30,7 @@ sig_orig_raw = raw.get_data()
 
 # Se filtra la señal con filtro pasabanda entre 0.5Hz y 4Hz
 raw.filter(0.5,4,method='iir')
-raw2,anot = set_sw_kc_annot(raw,'D:/Disco de 500/Work/Doctorado/Repository/Python-san/Python-san/Load Data/Data/ExpS68-S02_2020July23_23-25.txt')
+raw2,anot = set_sw_kc_annot(raw,'Data\ExpS68-S02_2020July23_23-25.txt')
 
 t_idx = anot.onset
 t_dur = anot.duration
@@ -81,7 +82,7 @@ while nowaves_count > 0:
 
 ########## ESCALOGRAMAS ##########
 
-def plot_scalogram(coefs,siglen,titulo,fname=0):
+def plot_scalogram(coefs,siglen,titulo="Título",fname=0):
     
     plt.figure(figsize=(12,4))
     plt.imshow(abs(coefs),extent=[0,siglen-1,120,0],
@@ -101,6 +102,11 @@ def plot_scalogram(coefs,siglen,titulo,fname=0):
 #%%
 
 ########## TRANSFORMADA WAVELET ##########
+# Fa = Fc/(a*T)
+# Fa: Pseudofrecuencia
+# Fc: Frecuencia central de la transformada wavelet (0.8125 Hz)
+# a: Escala
+# T: Periodo de muestreo
 
 x_train = []
 y_train = []
@@ -112,10 +118,10 @@ maxmax = 0.0009449624220248187
 
 for i in range(len(swaves)):
     print(np.round((i*100)/len(swaves),decimals=1),"%")
-    scales = np.arange(1,121,0.1)
+    scales = np.arange(1,121,4)
     coef, freqs = pywt.cwt(no_swaves[i],scales,'morl',sampling_period=1/200)
     coef = ((coef - minmin) * (1/(maxmax - minmin) * 255)).astype('uint8')
-    coef = coef[0::30]
+    # coef = coef[0::40]
 
     if(i<100):
         x_train.append(coef)
@@ -124,10 +130,10 @@ for i in range(len(swaves)):
         x_test.append(coef)
         y_test.append(0)
 
-    scales = np.arange(1,121,0.1)
+    scales = np.arange(1,121,4)
     coef, freqs = pywt.cwt(swaves[i],scales,'morl',sampling_period=1/200)
     coef = ((coef - minmin) * (1/(maxmax - minmin) * 255)).astype('uint8')
-    coef = coef[0::30]
+    # coef = coef[0::40]
     
     if(i<100):
         x_train.append(coef)

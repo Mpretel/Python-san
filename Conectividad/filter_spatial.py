@@ -1,13 +1,10 @@
-# %%
-"""
-==================
-Spatial Filters
-==================
-
-Blind Source Separation Techniques
-
-
-"""
+#%%
+# """
+# ==================
+# Spatial Filters
+# ==================
+# Blind Source Separation Techniques
+# """
 print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,6 +12,7 @@ from scipy import signal
 
 from sklearn.decomposition import FastICA, PCA
 
+#%%
 # #############################################################################
 # Set a fixed random seed for reproducible reasons
 
@@ -25,62 +23,74 @@ n_samples = 2000
 time = np.linspace(0, 8, n_samples)
 
 s1 = np.sin(2 * time)  # Sinusoidal, Signal 1
+s4 = -s1
 s2 = np.sign(np.sin(3 * time))  # Squared, Signal 2
 s3 = signal.sawtooth(2 * np.pi * time)  # Sawtooth, Signal 3
 
 # The first plot with all the signals, as it may be in reality.
 plt.figure(1)
+plt.subplot(4,1,1)
 plt.title('Sinusoidal')
-plt.subplot(3,1,1)
 plt.plot(s1, color='red')
+
+plt.subplot(4,1,2)
 plt.title('Squared')
-plt.subplot(3,1,2)
 plt.plot(s2, color='steelblue')
+
+plt.subplot(4,1,3)
 plt.title('Sawtooth')
-plt.subplot(3,1,3)
-plt.plot(s3, color='orange')
+plt.plot(s4, color='steelblue')
+
+plt.subplot(4,1,4)
+plt.title('Cosenoidal')
+plt.plot(s3, color='green')
 
 # %%
 # Put all the signals together in a multichannel arrangement
-S = np.c_[s1, s2, s3]
+S = np.c_[s1, s2, s3, s4]
 S += 0.2 * np.random.normal(size=S.shape)  # Add high frequency noise.
 
 # These are the nosiy signals.
 plt.figure(2)
 plt.title('Noisy Signals')
-plt.subplot(3,1,1)
+plt.subplot(4,1,1)
 plt.plot(S[:,0], color='red')
 plt.title('')
-plt.subplot(3,1,2)
+plt.subplot(4,1,2)
 plt.plot(S[:,1], color='steelblue')
 plt.title('')
-plt.subplot(3,1,3)
+plt.subplot(4,1,3)
 plt.plot(S[:,2], color='orange')
+plt.title('')
+plt.subplot(4,1,4)
+plt.plot(S[:,3], color='green')
 
-#%%
+# %%
 S /= S.std(axis=0)  # Standardize data
 
 # A is the mixing matrix
-A = np.array([[1, 1, 1], [0.5, 2, 1.0], [1.5, 1.0, 2.0]])  # Mixing matrix
+A = np.array([[1, 1, 1, 1], [0.5, 2, 1.0, 1.5], [1.5, 1.0, 2.0, 1.5], [1, 1.5, 0.5, 2]])  # Mixing matrix
 X = np.dot(S, A.T)  # Generate observations
 
 print("Observations are the signals as if they were obtained by real sensors, mixed and noisy signals %d,%d" % X.shape)
 
 plt.figure(3)
 plt.title('Observation 1')
-plt.subplot(3,1,1)
+plt.subplot(4,1,1)
 plt.plot(X[:,0], color='red')
 plt.title('Observation 2')
-plt.subplot(3,1,2)
+plt.subplot(4,1,2)
 plt.plot(X[:,1], color='steelblue')
 plt.title('Observation 3')
-plt.subplot(3,1,3)
+plt.subplot(4,1,3)
 plt.plot(X[:,2], color='orange')
+plt.title('Observation 4')
+plt.subplot(4,1,4)
+plt.plot(X[:,2], color='green')
 
-#%%
-
+# %%
 # From this point, we would like to do the opposite and recover the original sources, undoing the mixing process.
-ica = FastICA(n_components=3)
+ica = FastICA(n_components=4)
 S_ = ica.fit_transform(X)  # Reconstruct signals
 A_ = ica.mixing_  # Get estimated mixing matrix
 
@@ -88,29 +98,30 @@ A_ = ica.mixing_  # Get estimated mixing matrix
 assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
 # For comparison, compute PCA
-pca = PCA(n_components=3)
+pca = PCA(n_components=4)
 H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 
 # #############################################################################
 # Plot results
 
-
 plt.figure(4)
 plt.title('ICA 1')
-plt.subplot(3,1,1)
+plt.subplot(4,1,1)
 plt.plot(S_[:,0], color='red')
 plt.title('ICA 2')
-plt.subplot(3,1,2)
+plt.subplot(4,1,2)
 plt.plot(S_[:,1], color='steelblue')
 plt.title('ICA 3')
-plt.subplot(3,1,3)
+plt.subplot(4,1,3)
 plt.plot(S_[:,2], color='orange')
+plt.title('ICA 3')
+plt.subplot(4,1,4)
+plt.plot(S_[:,3], color='green')
 
 # %%
 
-
-
 import scipy.stats as stats
+
 r, p = stats.pearsonr(S_[:,0], -X[:,1])
 print(f"ICA 0 vs 1:Pearson r: {r} and p-value: {p}")
 
@@ -132,7 +143,6 @@ plt.subplot(3,1,3)
 plt.plot(H[:,2], color='orange')
 
 # %%
-
 import scipy.stats as stats
 r, p = stats.pearsonr(H[:,0], X[:,1])
 print(f"PCA 0 vs 1:Pearson r: {r} and p-value: {p}")
